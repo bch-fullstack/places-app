@@ -1,15 +1,25 @@
 (function () { 
     // Define a variable holding SVG mark-up that defines an icon image:
-    var svgMarkup = '<svg width="24" height="24" ' +
-        'xmlns="http://www.w3.org/2000/svg">' +
-        '<rect stroke="white" fill="#1b468d" x="1" y="1" width="22" ' +
-        'height="22" /><text x="12" y="18" font-size="12pt" ' +
-        'font-family="Arial" font-weight="bold" text-anchor="middle" ' +
-        'fill="white">H</text></svg>';
+    const SVG_MARKUP = `
+        <svg width="24" height="24"
+            xmlns="http://www.w3.org/2000/svg"> 
+            <rect stroke="white" fill="#1b468d" x="1" y="1" width="22"
+                height="22" />
+            <text x="12" y="18" font-size="12pt"
+                font-family="Arial" font-weight="bold" text-anchor="middle"
+                fill="white">H</text>
+        </svg>`;
 
-    var apiUrl = 'https://api.hel.fi/linkedevents/v1/place/?format=json';
+    const API_URL = 'https://api.hel.fi/linkedevents/v1/place/?format=json';
 
-    var icon = new H.map.Icon(svgMarkup),
+    const ROVANIEMI_COORDINATES = {
+        lat: 66.5039,
+        lng: 25.7294
+    };
+
+    const MAP_CONTAINER = document.getElementById('mapContainer');
+    
+    var icon = new H.map.Icon(SVG_MARKUP),
         platform = new H.service.Platform({
             'apikey': window.HERE_API_KEY
         });
@@ -19,25 +29,29 @@
 
     // Instantiate (and display) a map object:
     var map = new H.Map(
-        document.getElementById('mapContainer'),
+        MAP_CONTAINER,
         defaultLayers.vector.normal.map,
         {
             zoom: 10,
-            center: {
-                lat: lat,
-                lng: lon
-            }
+            center: ROVANIEMI_COORDINATES
         });
     
-    fetch(apiUrl)
-        .then(function (resp) {
+    fetch(API_URL)
+        .then(function(resp) {
             return resp.json()
         })
         .then(handleJSON)
         .catch(function (err) {
             console.log(err)
         })
-
+    
+    /**
+     * Iterate through the json object for events data
+     * for each event, render their coordinates to the HERE map object with addObject method
+     * https://developer.here.com/documentation/examples/maps-js/markers/markers-on-the-map
+     * 
+     * @param {Object} json parsed response from the API called
+     */
     function handleJSON(json) {
         json.data.forEach(function(event){
             var _coordinates =  {
@@ -50,6 +64,7 @@
         })
     }
 
+    // if the user browser doesnt support geolocation, suspend everything
     if (!navigator.geolocation) {
         return; 
     }
@@ -58,6 +73,14 @@
     // if user allows us to fetch their coordinates (lon, lat) then invoke the perform tasks function
     navigator.geolocation.getCurrentPosition(performTasks);
 
+    /**
+     * This function will be invoked if user allows fetching their coordinates in the popup
+     * extract the user lat, lon from position.coords object
+     * create HERE map marker object with H.map.Marker constructor and addObject method
+     * https://developer.here.com/documentation/examples/maps-js/markers/markers-on-the-map
+     * 
+     * @param {Object} position 
+     */
     function performTasks(position) {   
         var lat = position.coords.latitude,
             lon = position.coords.longitude;
