@@ -23,7 +23,7 @@
             coords = { lat: lat, lng: lon },
             userLocationMarker = new H.map.Marker(coords, {icon: icon}),
             platform = new H.service.Platform({
-                'apikey': 'FbsIG5yx6i1Fz5FCzLmqY88eUY9yaM2bMwoKcu6q4n4'
+                'apikey': 'ymAWgmyuF-sNMZXmToXekZdxHkK6C5NmTeGSTmxZqTQ'
             });
 
         // Obtain the default map types from the platform object:
