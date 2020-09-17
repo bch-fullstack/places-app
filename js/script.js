@@ -1,14 +1,13 @@
-(function () {
-    var lat = null,
-        lon = null;
+(function () { 
+    if (!navigator.geolocation) {
+        return; 
+    }
 
-    navigator.geolocation.getCurrentPosition(function(position) {
-        console.log(position.coords.latitude);
-        console.log(position.coords.longitude);
+    // ask for user permission to retrieve their estimated coordinates according to ISP provider
+    // if user allows us to fetch their coordinates (lon, lat) then invoke the perform tasks function
+    navigator.geolocation.getCurrentPosition(performTasks);
 
-        lat = position.coords.latitude;
-        lon = position.coords.longitude;
-
+    function performTasks(position) {
         // Define a variable holding SVG mark-up that defines an icon image:
         var svgMarkup = '<svg width="24" height="24" ' +
             'xmlns="http://www.w3.org/2000/svg">' +
@@ -17,14 +16,15 @@
             'font-family="Arial" font-weight="bold" text-anchor="middle" ' +
             'fill="white">H</text></svg>';
 
+        var lat = position.coords.latitude,
+            lon = position.coords.longitude;
+        
         var icon = new H.map.Icon(svgMarkup),
-            coords = {lat: lat, lng: lon},
-            marker = new H.map.Marker(coords, {icon: icon});
-
-        // user coordinates 
-        var platform = new H.service.Platform({
-            'apikey': 'FbsIG5yx6i1Fz5FCzLmqY88eUY9yaM2bMwoKcu6q4n4'
-        });
+            coords = { lat: lat, lng: lon },
+            userLocationMarker = new H.map.Marker(coords, {icon: icon}),
+            platform = new H.service.Platform({
+                'apikey': 'FbsIG5yx6i1Fz5FCzLmqY88eUY9yaM2bMwoKcu6q4n4'
+            });
 
         // Obtain the default map types from the platform object:
         var defaultLayers = platform.createDefaultLayers();
@@ -40,26 +40,30 @@
                     lng: lon
                 }
             });
+        
+        // mark user location on the map
+        map.addObject(userLocationMarker);
 
         fetch(`https://api.hel.fi/linkedevents/v1/place/?format=json`)
             .then(function (resp) {
                 return resp.json()
             })
-            .then(function (json) {
-                json.data.forEach(function(event){
-                    var _coordinates =  {
-                        lat: event.position.coordinates[1], 
-                        lng: event.position.coordinates[0]
-                    };
-
-                    var _marker = new H.map.Marker(_coordinates, {icon: icon});
-                    map.addObject(_marker);
-                })
-            })
+            .then(handleJSON)
             .catch(function (err) {
                 console.log(err)
             })
-        map.addObject(marker);
-    })
+
+        function handleJSON(json) {
+            json.data.forEach(function(event){
+                var _coordinates =  {
+                    lat: event.position.coordinates[1], 
+                    lng: event.position.coordinates[0]
+                };
+
+                var _marker = new H.map.Marker(_coordinates, {icon: icon});
+                map.addObject(_marker);
+            })
+        }
+    }
 })()
 
